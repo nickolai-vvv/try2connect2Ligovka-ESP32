@@ -1,6 +1,5 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
-#include <ArduinoJson.h>
 
 // Параметры сети
 const char* ssid = "Redmi9";
@@ -35,15 +34,14 @@ void setup() {
 }
 
 void loop() {
-  String requestURL = "https://ligovka.ru/detailed/usd";
+  String requestURL = "/";
 
   if (WiFi.status() == WL_CONNECTED) {
     WiFiClientSecure client;
-    client.setInsecure(); // Используется для тестирования, не рекомендуется для реальных приложений
 
-    if (client.connect("ligovka.ru", 443)) { // 443 - порт для HTTPS
+    if (client.connect("example.com", 443)) { // 443 - порт для HTTPS
       client.print(String("GET ") + requestURL + " HTTP/1.1\r\n" +
-                   "Host: ligovka.ru\r\n" +
+                   "Host: example.com\r\n" +
                    "Connection: close\r\n\r\n");
 
       while (client.connected()) {
@@ -54,16 +52,17 @@ void loop() {
       }
 
       while (client.available()) {
-        String payload = client.readString();
-        String Ppayload = ParseString(payload, "<td class=\"money_price buy_price\">", "</td>");
+        const String& payload = client.readString();
+        //String Ppayload = ParseString(payload, "<a title=\"Калькулятор\" class=\"value value_green\" href=\"#\">", "</a>");
+        String Ppayload = ParseString(payload, "<h1>", "</h1>");
         Serial.println("Полученный payload: " + Ppayload);
       }
-      
+
       client.stop();
     } else {
       Serial.println("Не удалось подключиться к серверу");
     }
   }
 
-  delay(30000); // 30 сек задержка
+  delay(60000); // 30 сек задержка
 }

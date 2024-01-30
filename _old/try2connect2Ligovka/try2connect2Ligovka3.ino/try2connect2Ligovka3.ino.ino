@@ -1,6 +1,4 @@
 #include <WiFi.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
 
 // Параметры сети
 const char* ssid = "Redmi9";
@@ -25,39 +23,43 @@ void setup() {
   Serial.begin(115200);
   delay(5000);
   WiFi.begin(ssid, password);
-  
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Соединяемся с Wi-Fi..");
   }
-  
+
   Serial.println("Соединение с Wi-Fi установлено");
 }
 
 void loop() {
-  String requestURL = "https://ligovka.ru/detailed/usd";
+  String requestURL = "http://example.com/";
 
   if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(requestURL);
-    int httpCode = http.GET();
+    WiFiClient client;
 
-    if (httpCode > 0) {
-      Serial.println("HTTP код: " + String(httpCode));
-      
-      if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
-        //String Ppayload = ParseString(payload, "<h1>", "</h1>");
-        String Ppayload = ParseString(payload, "<td class=\"money_price buy_price\">","</td>");
-        Serial.println("Полученный payload: " + Ppayload);
-      } else {
-        Serial.println("Ошибка HTTP-запроса");
+    if (client.connect("example.com", 80)) { // 80 - порт для HTTP
+      client.print(String("GET ") + requestURL + " HTTP/1.1\r\n" +
+                   "Host: example.com\r\n" +
+                   "Connection: close\r\n\r\n");
+
+      while (client.connected()) {
+        String line = client.readStringUntil('\n');
+        if (line == "\r") {
+          break;
+        }
       }
+
+      while (client.available()) {
+        String payload = client.readString();
+        String Ppayload = ParseString(payload, "<h1>", "</h1>");
+        Serial.println("Полученный payload: " + Ppayload);
+      }
+
+      client.stop();
     } else {
       Serial.println("Не удалось подключиться к серверу");
     }
-
-    http.end();
   }
 
   delay(30000); // 30 сек задержка
